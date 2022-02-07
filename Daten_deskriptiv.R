@@ -1,3 +1,14 @@
+install.packages("ggdag")
+install.packages("lavaan",dependencies = TRUE)
+install.packages("InvariantCausalPrediction")
+install.packages("nonlinearICP",dependencies = TRUE)
+install.packages("CompareCausalNetworks")
+install.packages("backShift")
+install.packages("pcalg")
+install.packages("RBGL")
+install.packages("graph",dependencies = TRUE)
+install.packages("semPlot")
+install.packages("randomForest")
 library(tidyverse)
 library(tidyr)
 library(dplyr)
@@ -10,6 +21,16 @@ library(rnaturalearthdata)
 library(rnaturalearth)
 library(sf)
 library(cartography)
+library(ggdag)
+library(dagitty)
+library(lavaan)
+library(InvariantCausalPrediction)
+library(CompareCausalNetworks)
+library(pcalg)
+library(RBGL)
+library(semPlot)
+library(nonlinearICP)
+
 
 wdi_2611 <- read_csv("assets/wdi_2611.csv")
 DemocracyMatrix_v4 <- read_excel("assets/DemocracyMatrix_v4.xlsx")
@@ -27,6 +48,8 @@ Inequality_Coef <- read_excel("assets/Inequality_Coef.xlsx")
 In_Ex <- read_excel("assets/In_Ex.xlsx")
 Demographie <- read_excel("assets/Demographie.xlsx")
 Meta26_11_Excel <- read_excel("assets/Meta26_11_Excel.xlsx")
+Female_in_par <- read_excel("assets/Female_in_par.xlsx")
+
 
 ### Falls die Indizes neu eingelesen werden muss die erste Zeile zum Spalten Namen werden
 colnames(In_Ex)<- In_Ex[1,]
@@ -59,7 +82,8 @@ Income_Index<- Income_Index[-1,]
 colnames(Meta26_11_Excel)<- Meta26_11_Excel[1,]
 Meta26_11_Excel<- Meta26_11_Excel[-1,]
 
-
+colnames(Female_in_par)<- Female_in_par[1,]
+Female_in_par<- Female_in_par[-1,]
 
 ###Pivots
 ### vor den Pivots ausf?hren
@@ -67,6 +91,7 @@ setnames(wdi_2611, old =c("1980 [YR1980]","1981 [YR1981]","1982 [YR1982]","1983 
 setnames(DemocracyMatrix_v4, old = "Country", new = "Country Name")
 setnames(Governance_Indicators, old = c("1996 [YR1996]","1998 [YR1998]","2000 [YR2000]","2002 [YR2002]","2003 [YR2003]","2004 [YR2004]","2005 [YR2005]","2006 [YR2006]","2007 [YR2007]","2008 [YR2008]","2009 [YR2009]","2010 [YR2010]","2011 [YR2011]","2012 [YR2012]","2013 [YR2013]","2014 [YR2014]","2015 [YR2015]","2016 [YR2016]","2017 [YR2017]","2018 [YR2018]","2019 [YR2019]","2020 [YR2020]"), new = c("1996", "1998","2000","2002", "2003","2004", "2005","2006", "2007","2008", "2009","2010", "2011","2012", "2013","2014", "2015","2016", "2017","2018", "2019","2020"))
 setnames(Demographie, old =c("1980 [YR1980]","1981 [YR1981]","1982 [YR1982]","1983 [YR1983]", "1984 [YR1984]", "1985 [YR1985]", "1986 [YR1986]", "1987 [YR1987]","1988 [YR1988]","1989 [YR1989]","1990 [YR1990]","1991 [YR1991]","1992 [YR1992]","1993 [YR1993]", "1994 [YR1994]", "1995 [YR1995]", "1996 [YR1996]", "1997 [YR1997]","1998 [YR1998]","1999 [YR1999]","2000 [YR2000]","2001 [YR2001]","2002 [YR2002]","2003 [YR2003]","2004 [YR2004]","2005 [YR2005]","2006 [YR2006]","2007 [YR2007]","2008 [YR2008]","2009 [YR2009]","2010 [YR2010]","2011 [YR2011]","2012 [YR2012]","2013 [YR2013]","2014 [YR2014]","2015 [YR2015]","2016 [YR2016]","2017 [YR2017]","2018 [YR2018]","2019 [YR2019]","2020 [YR2020]"), new = c("1980", "1981","1982", "1983","1984", "1985","1986", "1987","1988", "1989","1990", "1991","1992", "1993","1994", "1995","1996", "1997","1998", "1999","2000", "2001","2002", "2003","2004", "2005","2006", "2007","2008", "2009","2010", "2011","2012", "2013","2014", "2015","2016", "2017","2018", "2019","2020"))
+setnames(Female_in_par, old =c("1980 [YR1980]","1981 [YR1981]","1982 [YR1982]","1983 [YR1983]", "1984 [YR1984]", "1985 [YR1985]", "1986 [YR1986]", "1987 [YR1987]","1988 [YR1988]","1989 [YR1989]","1990 [YR1990]","1991 [YR1991]","1992 [YR1992]","1993 [YR1993]", "1994 [YR1994]", "1995 [YR1995]", "1996 [YR1996]", "1997 [YR1997]","1998 [YR1998]","1999 [YR1999]","2000 [YR2000]","2001 [YR2001]","2002 [YR2002]","2003 [YR2003]","2004 [YR2004]","2005 [YR2005]","2006 [YR2006]","2007 [YR2007]","2008 [YR2008]","2009 [YR2009]","2010 [YR2010]","2011 [YR2011]","2012 [YR2012]","2013 [YR2013]","2014 [YR2014]","2015 [YR2015]","2016 [YR2016]","2017 [YR2017]","2018 [YR2018]","2019 [YR2019]","2020 [YR2020]"), new = c("1980", "1981","1982", "1983","1984", "1985","1986", "1987","1988", "1989","1990", "1991","1992", "1993","1994", "1995","1996", "1997","1998", "1999","2000", "2001","2002", "2003","2004", "2005","2006", "2007","2008", "2009","2010", "2011","2012", "2013","2014", "2015","2016", "2017","2018", "2019","2020"))
 
 
 Wdi_pivot <- wdi_2611 %>%
@@ -176,6 +201,15 @@ Im_Ex_pivot <- In_Ex%>%
     values_to = "Im_Ex",
   )
 
+F_i_p_pivot <- Female_in_par %>%
+  pivot_longer(
+    cols = `1980`:`2020`,
+    names_to = "Year",
+    names_transform = list(Year= as.integer),
+    values_drop_na = TRUE
+  )%>%
+  pivot_wider(c("Country Code", "Country Name","Year"), "Series Code")
+
 ### Die Joins zur ?bersicht
 setnames(Gender_pivot, old= "Country", new = "Country Name")
 setnames(HDI_pivot, old= "Country", new = "Country Name")
@@ -189,7 +223,7 @@ setnames(Im_Ex_pivot, old = "Country", new = "CountryCode")
 ###normale Version
 
 
-wdi_sf <- left_join(Wdi_pivot,countries_sf, by= c("Country Code" = "iso_a3"))
+wdi_sf <- left_join(Wdi_pivot,countries_sf, by= c("Country Code" = "iso_a3"))#### geometry nervt
 
 wdi_Gov<- left_join(wdi_sf,Governance_pivot, by= c("Year", "Country Code"))
 view(wdi_Gov)
@@ -212,16 +246,16 @@ HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI <- left_join(HDI_GII_EDI_GNI_Dem_Inves
 HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef <- left_join(HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI, Ineq_coef_pivot, by = c("Year","Country Code"))
 HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex <- left_join(HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef, Im_Ex_pivot,by = c("Year","Country Code"))
 HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie <- left_join(HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex,demographie_pivot, by = c("Year","Country Code"))
+HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie_fip <- left_join(HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie, F_i_p_pivot, by= c("Year","Country Code"))
 
-
-Data_geo <- HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie%>%
-  select(one_of(c("Konflikt","type_of_conflict","SP.POP.2529.FE.5Y","SP.POP.2529.MA.5Y","SP.POP.TOTL.FE.ZS","SP.POP.TOTL.MA.ZS", "SP.POP.2024.MA.5Y", "SP.POP.2024.FE.5Y","Im_Ex","Ineq_Coef","adjHDI","GDI","Country Name.x","Country Code", "Year","freedom_dim_index_core","rule_settlement_freedom_core","rights_freedom_core","communication_freedom_core","intermediate_freedom_core","decision_freedom_core","classification_core","freedom_dim_index_core","equality_dim_index_core", "control_dim_index_core", "total_index_core","SI.POV.GINI","SL.TLF.ACTI.1524.FE.ZS","SL.TLF.CACT.FE.ZS","SL.TLF.TOTL.FE.ZS","SL.TLF.CACT.FM.ZS","NY.GDP.MKTP.KN","NY.GDP.MKTP.KD.ZG", "NY.GDP.PCAP.CN","NY.GDP.PCAP.KD.ZG","IQ.CPA.PROP.XQ","IQ.CPA.GNDR.XQ","SE.ADT.1524.LT.FM.ZS","SE.ENR.PRIM.FM.ZS", "SE.ENR.PRSC.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS","CC.EST", "PV.EST","GE.EST", "RQ.EST", "RL.EST","VA.EST","Country Code", "type", "economy", "continent", "region_un", "subregion","region_wb","geometry", "bd_best", "bd_low", "bd_high", "HDI", "GII","EDI","GNI","Investment")))
+Data_geo <- HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie_fip%>%
+  select(one_of(c("SG.GEN.PARL.ZS","Konflikt","type_of_conflict","SP.POP.2529.FE.5Y","SP.POP.2529.MA.5Y","SP.POP.TOTL.FE.ZS","SP.POP.TOTL.MA.ZS", "SP.POP.2024.MA.5Y", "SP.POP.2024.FE.5Y","Im_Ex","Ineq_Coef","adjHDI","GDI","Country Name.x","Country Code", "Year","freedom_dim_index_core","rule_settlement_freedom_core","rights_freedom_core","communication_freedom_core","intermediate_freedom_core","decision_freedom_core","classification_core","freedom_dim_index_core","equality_dim_index_core", "control_dim_index_core", "total_index_core","SI.POV.GINI","SL.TLF.ACTI.1524.FE.ZS","SL.TLF.CACT.FE.ZS","SL.TLF.TOTL.FE.ZS","SL.TLF.CACT.FM.ZS","NY.GDP.MKTP.KN","NY.GDP.MKTP.KD.ZG", "NY.GDP.PCAP.CN","NY.GDP.PCAP.KD.ZG","IQ.CPA.PROP.XQ","IQ.CPA.GNDR.XQ","SE.ADT.1524.LT.FM.ZS","SE.ENR.PRIM.FM.ZS", "SE.ENR.PRSC.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS","CC.EST", "PV.EST","GE.EST", "RQ.EST", "RL.EST","VA.EST","Country Code", "type", "economy","geometry", "continent", "region_un", "subregion","region_wb", "bd_best", "bd_low", "bd_high", "HDI", "GII","EDI","GNI","Investment")))
 
 
 
 #### wenn alles gejoint, die Variabeln in numerische Werte umformen
 
-col.num.all <-c("Im_Ex","equality_dim_index_core", "control_dim_index_core", "total_index_core","SP.POP.2529.FE.5Y","SP.POP.2529.MA.5Y","SP.POP.TOTL.FE.ZS","SP.POP.TOTL.MA.ZS", "SP.POP.2024.MA.5Y", "SP.POP.2024.FE.5Y","Ineq_Coef","adjHDI","GDI","Year","freedom_dim_index_core","rule_settlement_freedom_core","rights_freedom_core","communication_freedom_core","intermediate_freedom_core","classification_core","SI.POV.GINI","SL.TLF.ACTI.1524.FE.ZS","SL.TLF.CACT.FE.ZS","SL.TLF.TOTL.FE.ZS","SL.TLF.CACT.FM.ZS","NY.GDP.MKTP.KN","NY.GDP.MKTP.KD.ZG", "NY.GDP.PCAP.CN","NY.GDP.PCAP.KD.ZG","IQ.CPA.PROP.XQ","IQ.CPA.GNDR.XQ","SE.ADT.1524.LT.FM.ZS","SE.ENR.PRIM.FM.ZS", "SE.ENR.PRSC.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS","CC.EST", "PV.EST","GE.EST", "RQ.EST", "RL.EST","VA.EST", "bd_best", "bd_low", "bd_high", "HDI", "GII","EDI","GNI","Investment")
+col.num.all <-c("SG.GEN.PARL.ZS","Im_Ex","equality_dim_index_core", "control_dim_index_core", "total_index_core","SP.POP.2529.FE.5Y","SP.POP.2529.MA.5Y","SP.POP.TOTL.FE.ZS","SP.POP.TOTL.MA.ZS", "SP.POP.2024.MA.5Y", "SP.POP.2024.FE.5Y","Ineq_Coef","adjHDI","GDI","Year","freedom_dim_index_core","rule_settlement_freedom_core","rights_freedom_core","communication_freedom_core","intermediate_freedom_core","SI.POV.GINI","SL.TLF.ACTI.1524.FE.ZS","SL.TLF.CACT.FE.ZS","SL.TLF.TOTL.FE.ZS","SL.TLF.CACT.FM.ZS","NY.GDP.MKTP.KN","NY.GDP.MKTP.KD.ZG", "NY.GDP.PCAP.CN","NY.GDP.PCAP.KD.ZG","IQ.CPA.PROP.XQ","IQ.CPA.GNDR.XQ","SE.ADT.1524.LT.FM.ZS","SE.ENR.PRIM.FM.ZS", "SE.ENR.PRSC.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS","CC.EST", "PV.EST","GE.EST", "RQ.EST", "RL.EST","VA.EST", "bd_best", "bd_low", "bd_high", "HDI", "GII","EDI","GNI","Investment")
 Data_geo[col.num.all] <- sapply(Data_geo[col.num.all],as.numeric)
 
 
@@ -263,52 +297,21 @@ Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI <- left_join(Stat_HDI_GII_EDI_GNI
 Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef <- left_join(Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI, Ineq_coef_pivot, by = c("Year","Country Code"))
 Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex <- left_join(Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef, Im_Ex_pivot,by = c("Year","Country Code"))
 Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie <- left_join(Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex,demographie_pivot, by = c("Year","Country Code"))
-
-Stat_Data_geo <- Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie%>%
-  select(one_of(c("SP.POP.2529.FE.5Y","SP.POP.2529.MA.5Y","SP.POP.TOTL.FE.ZS","SP.POP.TOTL.MA.ZS", "SP.POP.2024.MA.5Y", "SP.POP.2024.FE.5Y","Im_Ex","Ineq_Coef","adjHDI","GDI","Country Name.x","Country Code", "Year","classification_core","freedom_dim_index_core","equality_dim_index_core", "control_dim_index_core", "total_index_core","SI.POV.GINI","SL.TLF.ACTI.1524.FE.ZS","SL.TLF.CACT.FE.ZS","SL.TLF.TOTL.FE.ZS","SL.TLF.CACT.FM.ZS","NY.GDP.MKTP.KN","NY.GDP.MKTP.KD.ZG", "NY.GDP.PCAP.CN","NY.GDP.PCAP.KD.ZG","IQ.CPA.PROP.XQ","IQ.CPA.GNDR.XQ","SE.ADT.1524.LT.FM.ZS","SE.ENR.PRIM.FM.ZS", "SE.ENR.PRSC.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS","CC.EST", "PV.EST","GE.EST", "RQ.EST", "RL.EST","VA.EST","Country Code", "type", "economy", "continent", "region_un", "subregion","region_wb","geometry", "Sum_bd_best", "Sum_bd_low", "Sum_bd_high", "HDI", "GII","EDI","GNI","Investment")))
+Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie_fip <- left_join(Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie, F_i_p_pivot, by= c("Year","Country Code"))
+Stat_Data_geo <- Stat_HDI_GII_EDI_GNI_Dem_Invest_Gov_GDI_adjHDI_Ineq_Coef_Im_Ex_Demographie_fip%>%
+  select(one_of(c("SG.GEN.PARL.ZS","SP.POP.2529.FE.5Y","SP.POP.2529.MA.5Y","SP.POP.TOTL.FE.ZS","SP.POP.TOTL.MA.ZS", "SP.POP.2024.MA.5Y", "SP.POP.2024.FE.5Y","Im_Ex","Ineq_Coef","adjHDI","GDI","Country Name.x","Country Code", "Year","classification_core","freedom_dim_index_core","equality_dim_index_core", "control_dim_index_core", "total_index_core","SI.POV.GINI","SL.TLF.ACTI.1524.FE.ZS","SL.TLF.CACT.FE.ZS","SL.TLF.TOTL.FE.ZS","SL.TLF.CACT.FM.ZS","NY.GDP.MKTP.KN","NY.GDP.MKTP.KD.ZG", "NY.GDP.PCAP.CN","NY.GDP.PCAP.KD.ZG","IQ.CPA.PROP.XQ","IQ.CPA.GNDR.XQ","SE.ADT.1524.LT.FM.ZS","SE.ENR.PRIM.FM.ZS", "SE.ENR.PRSC.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS","CC.EST", "PV.EST","GE.EST", "RQ.EST", "RL.EST","VA.EST","Country Code", "type", "economy", "continent", "region_un", "subregion","region_wb","geometry", "Sum_bd_best", "Sum_bd_low", "Sum_bd_high", "HDI", "GII","EDI","GNI","Investment")))
 
 Stat_Data_geo <-Stat_Data_geo%>%
   transform(Konflikt=Sum_bd_best> 24)%>%
   replace_na(list(Konflikt = FALSE))
 
-stat.col.num<-c("equality_dim_index_core", "control_dim_index_core", "total_index_core","SP.POP.2529.FE.5Y","SP.POP.2529.MA.5Y","SP.POP.TOTL.FE.ZS","SP.POP.TOTL.MA.ZS", "SP.POP.2024.MA.5Y", "SP.POP.2024.FE.5Y","Im_Ex","Ineq_Coef","adjHDI","GDI","Year","freedom_dim_index_core","classification_core","SI.POV.GINI","SL.TLF.ACTI.1524.FE.ZS","SL.TLF.CACT.FE.ZS","SL.TLF.TOTL.FE.ZS","SL.TLF.CACT.FM.ZS","NY.GDP.MKTP.KN","NY.GDP.MKTP.KD.ZG", "NY.GDP.PCAP.CN","NY.GDP.PCAP.KD.ZG","IQ.CPA.PROP.XQ","IQ.CPA.GNDR.XQ","SE.ADT.1524.LT.FM.ZS","SE.ENR.PRIM.FM.ZS", "SE.ENR.PRSC.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS","CC.EST", "PV.EST","GE.EST", "RQ.EST", "RL.EST","VA.EST", "Sum_bd_best", "Sum_bd_low", "Sum_bd_high", "HDI", "GII","EDI","GNI","Investment")
+stat.col.num<-c("SG.GEN.PARL.ZS","equality_dim_index_core", "control_dim_index_core", "total_index_core","SP.POP.2529.FE.5Y","SP.POP.2529.MA.5Y","SP.POP.TOTL.FE.ZS","SP.POP.TOTL.MA.ZS", "SP.POP.2024.MA.5Y", "SP.POP.2024.FE.5Y","Im_Ex","Ineq_Coef","adjHDI","GDI","Year","freedom_dim_index_core","SI.POV.GINI","SL.TLF.ACTI.1524.FE.ZS","SL.TLF.CACT.FE.ZS","SL.TLF.TOTL.FE.ZS","SL.TLF.CACT.FM.ZS","NY.GDP.MKTP.KN","NY.GDP.MKTP.KD.ZG", "NY.GDP.PCAP.CN","NY.GDP.PCAP.KD.ZG","IQ.CPA.PROP.XQ","IQ.CPA.GNDR.XQ","SE.ADT.1524.LT.FM.ZS","SE.ENR.PRIM.FM.ZS", "SE.ENR.PRSC.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS","CC.EST", "PV.EST","GE.EST", "RQ.EST", "RL.EST","VA.EST", "Sum_bd_best", "Sum_bd_low", "Sum_bd_high", "HDI", "GII","EDI","GNI","Investment")
 Stat_Data_geo[stat.col.num]<-sapply(Stat_Data_geo[stat.col.num],as.numeric)
 
 
 
 
-### Multivariate Regressionen durchführen, um erste Zusammenhänge 
-## Daten Vorbereitung.
-Stat_Data_geo <- Stat_Data_geo%>%
-  select(-one_of(c("geometry","Country Code","Year","Country Name.x","classification_core","type", "economy", "continent", "region_un", "subregion","region_wb")))
-summary(Stat_Data_geo)
-pairs(Stat_Data_geo) ### Daten kleiner machen. Du groß für Pairs
-
-Data_lm <-Stat_Data_geo%>%
-  select("freedom_dim_index_core","rule_settlement_freedom_core","rights_freedom_core","communication_freedom_core","intermediate_freedom_core","classification_core","SI.POV.GINI","SL.TLF.ACTI.1524.FE.ZS","SL.TLF.CACT.FE.ZS","SL.TLF.TOTL.FE.ZS","SL.TLF.CACT.FM.ZS","NY.GDP.MKTP.KN","NY.GDP.MKTP.KD.ZG", "NY.GDP.PCAP.CN","NY.GDP.PCAP.KD.ZG","IQ.CPA.PROP.XQ","IQ.CPA.GNDR.XQ","SE.ADT.1524.LT.FM.ZS","SE.ENR.PRIM.FM.ZS", "SE.ENR.PRSC.FM.ZS", "SE.ENR.SECO.FM.ZS", "SE.ENR.TERT.FM.ZS","CC.EST", "PV.EST","GE.EST", "RQ.EST", "RL.EST","VA.EST", "Sum_bd_best", "Sum_bd_low", "Sum_bd_high", "HDI", "GII","EDI","GNI","Investment")%>%
-  tibble()
-## Formula für die Rregression vorbereiten lm=liniare multiple Regression, glm=logistisch Binär
-
-Formula_lmRegression <-  cbind(Sum_bd_best,Sum_bd_high,Sum_bd_low)~SL.TLF.CACT.FE.ZS+SL.TLF.TOTL.FE.ZS+NY.GDP.PCAP.CN+SE.ENR.PRIM.FM.ZS+SE.ENR.PRSC.FM.ZS+SE.ENR.SECO.FM.ZS+SE.ENR.TERT.FM.ZS+intermediate_freedom_core+communication_freedom_core+rights_freedom_core+rule_settlement_freedom_core+HDI+GII+EDI+GNI+Investment+freedom_dim_index_core+CC.EST+IQ.CPA.PROP.XQ+IQ.CPA.GNDR.XQ+PV.EST+GE.EST+RQ.EST+RL.EST+VA.EST
-
-Formula_glmRegression <-  Konflikt~SL.TLF.CACT.FE.ZS+SL.TLF.TOTL.FE.ZS+NY.GDP.PCAP.CN+SE.ENR.PRIM.FM.ZS+SE.ENR.PRSC.FM.ZS+SE.ENR.SECO.FM.ZS+SE.ENR.TERT.FM.ZS+intermediate_freedom_core+communication_freedom_core+rights_freedom_core+rule_settlement_freedom_core+HDI+GII+EDI+GNI+Investment+freedom_dim_index_core+CC.EST+IQ.CPA.PROP.XQ+IQ.CPA.GNDR.XQ+PV.EST+GE.EST+RQ.EST+RL.EST+VA.EST
-
-
-
-###linear Model
-Stat_data_lm<- lm(Formula_lmRegression,data = Data_lm)
-
-summary(Stat_data_lm)
-
-vcov(Stat_data_lm)
-
-## für eine logarithmische binäre Regression werden die Werte 0 und 1 benötigt. oder True und False. Welche Variablen haben einen Einfluss auf das Auftreten eines Konfliktes
-
-## Generalized Linear Models
-Konflikt_Logit <-glm(Formula_glmRegression,data=Data_glm, family = binomial("logit"),maxit=100)
-summary(Konflikt_Logit)
-
-### Warum nur stop das bei vielen Variablen?
+#### to do's
 ### nicht lineare Regressionen? -> nlm
 ### überprüfen nach homoskedastizität und Residuen sind normalverteilt und Test aauf Linearität -> residuen Diagramm 
 ### multiplre Regression mit Moderator Variable (macht evtl. nicht so viel sinn)
@@ -318,12 +321,15 @@ summary(Konflikt_Logit)
 
 
 
+# in welchen Spalten sind wie viele NAs?
 
 
+colSums(is.na(Stat_Data_geo))
 
 
-
-
+Labeler <- function(x){
+  return(Meta26_11_Excel$`Indicator Name`[which(x==Meta26_11_Excel$`Code`)])
+}
 
 
 
