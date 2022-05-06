@@ -1,18 +1,280 @@
+# Die Regionen in 1 und 2 aufgeteilt. South asia, mittlerer Oste und Nord Afrika, Subsahara Afrika sind 2; Europa und zentral Asien, lateinamerika und Karibik, Ost asien und pacifik und Nordamerika sind 2
 
 
-install.packages("extrafont")
-library(extrafont)
+data_cor_merge <- DataICP_sel_na%>%
+  mutate(region_new= region_wb)
+data_cor_merge$region_new <- as.numeric(as.factor(data_cor_merge$region_new))
+
+data_cor_merge$region_new<- replace(data_cor_merge$region_new,data_cor_merge$region_new<4,1)
+data_cor_merge$region_new<- replace(data_cor_merge$region_new,data_cor_merge$region_new>3,2)
+
+data_cor_merge$Konflikt<-as.numeric(as.factor(data_cor_merge$Konflikt))
+data_cor_merge$NY.GDP.PCAP.CN<- log(data_cor_merge$NY.GDP.PCAP.CN)
+data_cor_merge$EN.POP.DNST<- log(data_cor_merge$EN.POP.DNST)
+data_cor_merge$SP.ADO.TFRT<- log(data_cor_merge$SP.ADO.TFRT)
+data_cor_merge$Im_Ex<- log(data_cor_merge$Im_Ex)
+
+# jetzt eube ICP durchführen
+
+# Matrix aus den Prediktor Variablen
+X_sel_new<-data_cor_merge%>%
+  select(-one_of("Country.Code","Year","Konflikt","region_wb","economy","region_new"))%>%
+  as.matrix()
+# Konflikte als Zielvariable
+Y_sel_new<- data_cor_merge%>%
+  pull(Konflikt)
+# Regionen der World Bank als Interventionen  
+ExpInd_sel_new <- data_cor_merge%>%
+  pull(region_new)
+
+#ExpInd_sel_new<- as.numeric(as.factor(ExpInd_sel_new))
+
+hiddenICP(X_sel_new,Y_sel_new,ExpInd_sel_new) ### hier wird doch nichts signifikant
+
+ICP(X_sel_new,Y_sel_new,ExpInd_sel_new)
 
 
-font_import()
-loadfonts(device = "win", quiet = TRUE)
+### jetzt die einzelnen Regressionen durch die beiden environments
+#Environment 1
+data_cor_merge1 <- Data_cor_sel%>%
+  mutate(region_new= region_wb)
+data_cor_merge1$region_new <- as.numeric(as.factor(data_cor_merge1$region_new))
+
+data_cor_merge1$region_new<- replace(data_cor_merge1$region_new,data_cor_merge1$region_new<4,1)
+data_cor_merge1$region_new<- replace(data_cor_merge1$region_new,data_cor_merge1$region_new>3,2)
+
+data_cor_logit1 <- data_cor_merge1%>%
+  filter(region_new== 1)
+
+Data_logit_new1 <- glm(Formula_logit, data_cor_logit1, family = binomial("logit"))
+summary(Data_logit_new1)
+
+# Environment 2
+data_cor_merge2 <- Data_cor_sel%>%
+  mutate(region_new= region_wb)
+data_cor_merge2$region_new <- as.numeric(as.factor(data_cor_merge$region_new))
+
+data_cor_merge2$region_new<- replace(data_cor_merge2$region_new,data_cor_merge2$region_new<4,1)
+data_cor_merge2$region_new<- replace(data_cor_merge2$region_new,data_cor_merge2$region_new>3,2)
+
+data_cor_logit2 <- data_cor_merge2%>%
+  filter(region_new== 2)
+
+Data_logit_new2 <- glm(Formula_logit, data_cor_logit2, family = binomial("logit"))
+summary(Data_logit_new2)
+
+#### Cross Validation
+
+Data_logit_reg_cv <- train(Formula_logit, Data_cor_sel, family = binomial("logit"), trControl = trainControl(
+  method = "cv", number = 10, verboseIter = TRUE))
 
 
-fonts()
 
-library(extrafont)
-font_import()
-loadfonts(device="win")
+Data_cor_osasiepaz <- Stat_Data_geo%>%
+  filter(region_un == "Africa")%>%
+  select(one_of("Konflikt","Year","SP.DYN.CDRT.IN","Population_secondary_education_25.","SP.POP.GROW","EN.POP.DNST","SP.URB.TOTL.IN.ZS","SP.ADO.TFRT","Im_Ex","SP.POP.2024.MA.5Y","SL.TLF.TOTL.FE.ZS","SG.GEN.PARL.ZS","SL.UEM.1524.ZS","TX.VAL.MMTL.ZS.UN","SE.XPD.TOTL.GD.ZS","TX.VAL.FUEL.ZS.UN","NY.GDP.PCAP.CN","total_index_core","economy","region_wb"))%>%
+  drop_na()
+
+# Konflikt in numerischen Faktor umwandeln und Variablen logarythmieren wegen hoher Spannweite der Werte
+Data_cor_osasiepaz$Konflikt<- as.factor(as.numeric(Data_cor_osasiepaz$Konflikt))
+Data_cor_osasiepaz$Im_Ex<- log(Data_cor_osasiepaz$Im_Ex)
+Data_cor_osasiepaz$NY.GDP.PCAP.CN<- log(Data_cor_osasiepaz$NY.GDP.PCAP.CN)
+Data_cor_southasia$EN.POP.DNST<- log(Data_cor_osasiepaz$EN.POP.DNST)
+Data_cor_osasiepaz$SP.ADO.TFRT<- log(Data_cor_osasiepaz$SP.ADO.TFRT)
+
+# logit Regression mit Koeffizienten ausgeben
+
+Data_logit_osasiepaz <- glm(Formula_logit, data = Data_cor_osasiepaz, family = binomial("logit"))
+summary(Data_logit_osasiepaz)
+
+###### ICP mit den UN Regionen!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
+
+###################################### Tets
+
+# Noch Konflikte und Jahre rausnehmen.
+Type_of_conflict<- Data_geo%>%
+  select(one_of("Country Code","Year","type_of_conflict"))%>%
+  group_by(`Country Code`, `Year`)%>%
+  distinct()
+
+### distinct funktion?
+Stat_data_type <- left_join(Stat_Data_geo,Type_of_conflict, by = c("Country.Code"="Country Code","Year"))%>%
+  replace_na(list(type_of_conflict = 0))
+
+
+
+Data_cor_sel_classification <- Stat_data_type%>%
+  select(one_of("SP.DYN.CBRT.IN" ,"Population_secondary_education_25.","SP.POP.GROW","EN.POP.DNST","SP.URB.TOTL.IN.ZS","SP.ADO.TFRT","Im_Ex","SP.POP.2024.MA.5Y","SL.TLF.TOTL.FE.ZS","SG.GEN.PARL.ZS","SL.UEM.1524.ZS","TX.VAL.MMTL.ZS.UN","SE.XPD.TOTL.GD.ZS","TX.VAL.FUEL.ZS.UN","NY.GDP.PCAP.CN","total_index_core","Konflikt","type_of_conflict","region_wb","Year","Country.Code","economy","continent"))%>%
+  drop_na()%>%
+  filter(type_of_conflict!=c(2))%>%
+  filter(Year> 2008)
+
+
+Data_cor_sel_classification$Konflikt<- as.factor(as.numeric(Data_cor_sel_classification$Konflikt))
+Data_cor_sel_classification$Im_Ex<- log(Data_cor_sel_classification$Im_Ex)
+Data_cor_sel_classification$NY.GDP.PCAP.CN<- log(Data_cor_sel_classification$NY.GDP.PCAP.CN)
+Data_cor_sel_classification$EN.POP.DNST<- log(Data_cor_sel_classification$EN.POP.DNST)
+Data_cor_sel_classification$SP.ADO.TFRT<- log(Data_cor_sel_classification$SP.ADO.TFRT)
+
+Formula_logit<- Konflikt~SP.DYN.CBRT.IN+Population_secondary_education_25.+SP.POP.GROW+EN.POP.DNST+SP.URB.TOTL.IN.ZS+SP.ADO.TFRT+Im_Ex+SP.POP.2024.MA.5Y+SL.TLF.TOTL.FE.ZS+SG.GEN.PARL.ZS+SL.UEM.1524.ZS+TX.VAL.MMTL.ZS.UN+TX.VAL.FUEL.ZS.UN+SE.XPD.TOTL.GD.ZS+NY.GDP.PCAP.CN+total_index_core
+
+
+Data_logit_reg <- glm(Formula_logit, data = Data_cor_sel_classification, family = binomial("logit"))
+summary(Data_logit_reg)
+
+Data_cor_sel_classification_sel <- Data_cor_sel_classification
+
+na_strings2 <- c("North America")
+Data_cor_sel_classification_sel<-Data_cor_sel_classification_sel%>% 
+  replace_with_na_at(.vars=c("region_wb"), condition = ~.x %in% na_strings2)
+
+Data_cor_sel_classification_sel$Konflikt<-as.numeric(as.factor(Data_cor_sel_classification_sel$Konflikt))
+Data_cor_sel_classification_sel<-Data_cor_sel_classification_sel%>%
+  drop_na()
+
+# Matrix aus den Prediktor Variablen
+X_sel<-Data_cor_sel_classification_sel%>%
+  select(-one_of("Country.Code","Year","Konflikt","region_wb","economy","continent","type_of_conflict"))%>%
+  as.matrix()
+# Konflikte als Zielvariable
+Y_sel<- Data_cor_sel_classification_sel%>%
+  pull(Konflikt)
+# Regionen der World Bank als Interventionen  
+ExpInd_sel_reg <- Data_cor_sel_classification_sel%>%
+  pull(region_wb)
+ExpInd_sel_reg<- as.numeric(as.factor(ExpInd_sel_reg))
+
+
+# hidden ICP mit der Region
+hidICP_sel<-hiddenICP(X_sel,Y_sel,ExpInd_sel_reg) ### ich hab irgendwas nicht logarithmieert
+print(hidICP_sel)
+##########################################################################
+
+Data_ICP_sel_piv<- DataICP_sel_na%>%
+  pivot_longer(cols = `SP.DYN.CDRT.IN`:`total_index_core`,
+               names_to = "Indikatoren",
+               names_transform = list(Indikatoren =as.character),
+               values_drop_na= TRUE,
+               values_to = "Value")
+
+
+
+Dataa_cor_gen<-  Stat_Data_geo%>%
+  select(one_of("Konflikt","GDI","SP.DYN.CBRT.IN","SP.DYN.CDRT.IN","Population_secondary_education_25.","SP.POP.GROW","EN.POP.DNST","SP.URB.TOTL.IN.ZS","SP.ADO.TFRT","Im_Ex","SP.POP.2024.MA.5Y","SL.TLF.TOTL.FE.ZS","SG.GEN.PARL.ZS","SL.UEM.1524.ZS","TX.VAL.MMTL.ZS.UN","SE.XPD.TOTL.GD.ZS","TX.VAL.FUEL.ZS.UN","NY.GDP.PCAP.CN","total_index_core"))%>%
+  drop_na()
+
+
+subset_cor <- subset(Dataa_cor_gen, select = c(GDI,SP.DYN.CDRT.IN, Population_secondary_education_25.,  SP.POP.GROW,EN.POP.DNST,SP.URB.TOTL.IN.ZS,SP.ADO.TFRT,Im_Ex,SP.POP.2024.MA.5Y,SL.TLF.TOTL.FE.ZS,SG.GEN.PARL.ZS,SL.UEM.1524.ZS,TX.VAL.MMTL.ZS.UN,TX.VAL.FUEL.ZS.UN,SE.XPD.TOTL.GD.ZS,NY.GDP.PCAP.CN,total_index_core))
+cor_tab <- cor(subset_cor, method = "spearman")
+cor_tab
+Formula_gen <-Konflikt ~  SP.DYN.CDRT.IN+Population_secondary_education_25.+  SP.POP.GROW+EN.POP.DNST+SP.URB.TOTL.IN.ZS+SP.ADO.TFRT+Im_Ex+SP.POP.2024.MA.5Y+SL.TLF.TOTL.FE.ZS+SG.GEN.PARL.ZS+SL.UEM.1524.ZS+TX.VAL.MMTL.ZS.UN+TX.VAL.FUEL.ZS.UN+SE.XPD.TOTL.GD.ZS+NY.GDP.PCAP.CN+total_index_core
+Dataa_cor_gen$Konflikt<- as.factor(as.numeric(Dataa_cor_gen$Konflikt))
+Dataa_cor_gen$Im_Ex<- log(Dataa_cor_gen$Im_Ex)
+Dataa_cor_gen$NY.GDP.PCAP.CN<- log(Dataa_cor_gen$NY.GDP.PCAP.CN)
+Dataa_cor_gen$EN.POP.DNST<- log(Dataa_cor_gen$EN.POP.DNST)
+Dataa_cor_gen$SP.ADO.TFRT<- log(Dataa_cor_gen$SP.ADO.TFRT)
+
+Logit_gen <- glm(Formula_gen, data= Dataa_cor_gen, family = binomial("logit"))
+summary(Logit_gen)
+
+vif(Logit_gen)
+1/vif(Logit_gen)
+
+### 
+
+
+Dataa_ICP_gen<-  Stat_Data_geo%>%
+  select(one_of("Konflikt","GDI","region_wb","Year","Country.Code","economy","GDI","SP.DYN.CDRT.IN","Population_secondary_education_25.","SP.POP.GROW","EN.POP.DNST","SP.URB.TOTL.IN.ZS","SP.ADO.TFRT","Im_Ex","SP.POP.2024.MA.5Y","SL.TLF.TOTL.FE.ZS","SG.GEN.PARL.ZS","SL.UEM.1524.ZS","TX.VAL.MMTL.ZS.UN","SE.XPD.TOTL.GD.ZS","TX.VAL.FUEL.ZS.UN","NY.GDP.PCAP.CN","total_index_core"))%>%
+  drop_na()
+
+
+
+Dataa_ICP_gen_na <- Dataa_ICP_gen%>%
+  drop_na()
+
+Dataa_ICP_gen_na$Konflikt<-as.numeric(as.factor(Dataa_ICP_gen_na$Konflikt))
+Dataa_ICP_gen_na$NY.GDP.PCAP.CN<- log(Dataa_ICP_gen_na$NY.GDP.PCAP.CN)
+Dataa_ICP_gen_na$EN.POP.DNST<- log(Dataa_ICP_gen_na$EN.POP.DNST)
+Dataa_ICP_gen_na$SP.ADO.TFRT<- log(Dataa_ICP_gen_na$SP.ADO.TFRT)
+
+# Matrix aus den Prediktor Variablen
+X_sel_gen<-Dataa_ICP_gen_na%>%
+  select(-one_of("Country.Code","Year","Konflikt","region_wb","economy"))%>%
+  as.matrix()
+# Konflikte als Zielvariable
+Y_sel_gen<- Dataa_ICP_gen_na%>%
+  pull(Konflikt)
+# Regionen der World Bank als Interventionen  
+ExpInd_gen <- Dataa_ICP_gen_na%>%
+  pull(region_wb)
+ExpInd_gen<- as.numeric(as.factor(ExpInd_gen))
+
+
+# hidden ICP mit der Region
+hidICP_sel_gen<-hiddenICP(X_sel_gen,Y_sel_gen,ExpInd_gen)
+
+
+
+
+
+
+
+
+
+
+
+
+stargazer(Data_logit_reg, titel = "Invarian Causal Projection mit versteckten Variablen", style = "default",decimal.mark = ",",
+          out = "ICP.html")
+
+
+test<-Data_geo%>%
+  filter(classification_core== "Working Democracy")%>%
+  filter(Konflikt==T)
+
+data_cor_demo<- Stat_Data_geo%>%
+  select(one_of("Country.Code","Year","Konflikt", "equality_dim_index_core","control_dim_index_core","freedom_dim_index_core"))
+
+session_info()
+
+
+Formulr_test_cor <- Konflikt~SP.DYN.LE00.IN+SP.DYN.CBRT.IN+SP.DYN.CDRT.IN+Population_secondary_education_25.+NY.GNP.PCAP.PP.CD+SP.POP.GROW+EN.POP.DNST+SP.URB.TOTL.IN.ZS+SH.STA.MMRT+SP.ADO.TFRT+Im_Ex+SP.POP.2024.MA.5Y+SL.TLF.TOTL.FE.ZS+SG.GEN.PARL.ZS+SL.UEM.1524.ZS+TX.VAL.MMTL.ZS.UN+TX.VAL.FUEL.ZS.UN+SE.XPD.TOTL.GD.ZS+NY.GDP.PCAP.CN+equality_dim_index_core+freedom_dim_index_core
+
+glmt_tesdt_cor <-  glm(Formulr_test_cor, data = Data_cor, family = binomial("logit"))
+summary(glmt_tesdt_cor)
+
+
+#### Mit den Variablen, die unabhängig voneinander sind
+Data_cor_multikor <- Stat_Data_geo%>%
+  select(one_of("Konflikt","SP.DYN.CBRT.IN","SP.DYN.CDRT.IN","Population_secondary_education_25.","SP.POP.GROW","EN.POP.DNST","SP.URB.TOTL.IN.ZS","SP.ADO.TFRT","Im_Ex","SP.POP.2024.MA.5Y","SL.TLF.TOTL.FE.ZS","SG.GEN.PARL.ZS","SL.UEM.1524.ZS","TX.VAL.MMTL.ZS.UN","SE.XPD.TOTL.GD.ZS","TX.VAL.FUEL.ZS.UN","NY.GDP.PCAP.CN","total_index_core","GE.EST"))%>% 
+  drop_na()
+
+Data_cor_multikor$Konflikt<- as.factor(as.numeric(Data_cor_multikor$Konflikt))
+
+Data_cor_multikor$Im_Ex<- log(Data_cor_multikor$Im_Ex)
+Data_cor_multikor$NY.GDP.PCAP.CN<- log(Data_cor_multikor$NY.GDP.PCAP.CN)
+Data_cor_multikor$EN.POP.DNST<- log(Data_cor_multikor$EN.POP.DNST)
+Data_cor_multikor$SP.ADO.TFRT<- log(Data_cor_multikor$SP.ADO.TFRT)
+
+Formula_multikor <-Konflikt~SP.DYN.CBRT.IN+SP.DYN.CDRT.IN+Population_secondary_education_25.+SP.POP.GROW+EN.POP.DNST+SP.URB.TOTL.IN.ZS+SP.ADO.TFRT+Im_Ex+SP.POP.2024.MA.5Y+SL.TLF.TOTL.FE.ZS+SG.GEN.PARL.ZS+SL.UEM.1524.ZS+TX.VAL.MMTL.ZS.UN+TX.VAL.FUEL.ZS.UN+SE.XPD.TOTL.GD.ZS+NY.GDP.PCAP.CN+total_index_core+GE.EST
+
+
+glm_multicor <-  glm(Formula_multikor, data = Data_cor_multikor, family = binomial("logit"))
+summary(glm_multicor)
+
+
+
+
+subset_stat_data_geo <- subset(Stat_Data_geo, select= c(CC.EST, GE.EST,RQ.EST,RL.EST,VA.EST,total_index_core))%>%
+  drop_na()
+cor_gov<- cor(subset_stat_data_geo)
+cor_gov
 
 ### Manuelles Ver?ndern, damit die Joins besser funktionieren
 
@@ -274,3 +536,94 @@ if(require(backShift) & require(pcalg))
                                                 seed = myseed)
   X <- simResult$X
   environment <- simResult$environment
+
+  
+  
+  ProzentualChange <- function(x,y){
+    x <- x[order(x$Year, dercreasing=TRUE),]
+    pct_change <- -diff((x$y))/x$y[-1]*100
+    data.frame(Year= x$Year[-length(x$Year)], pct_change=pct_change)
+  }
+  
+  
+
+is.na(Stat_Data_geo)  
+# Stat_Data_geo%>%
+#   select(where(is.numeric))%>%
+#   filter(Year>2009)%>%
+#   colSums(is.na(Stat_Data_geo))
+# 
+# colSums(is.na(DemocracyMatrix_v4))
+
+# ### hiddenICP funktioniert nicht. aber warum? Was sind genau die Intervention? Welche Variable ist die Intervention? Oder welche Form müss der ExpInd annehmen? 
+# ## Ideen: NAs rausnehmen, aber dann haben wir nur noch einen kleinen Datensatz. Mehrere Spalten erstellen in den die Intervention region enthalten sind. 
+# 
+# ##### mal mit der getparents() funktion versuchen? -> braucht für die meisten Funktionen auch einen ExpInd.Andere Funktionen, die Parents ausrechnen kann benötigen Packages, welche für diese Version von R nicht instalierbar sind.
+# 
+# getParents()
+# 
+# getParents(X,parentsOf = 1:ncol(X), method = "regression")
+# 
+# 
+# 
+# #### mit ein paar graphen rumspielen
+# 
+# #### directed Acylic Graphs
+# 
+# Y <- Data_ICP%>%
+#   pull(Sum_bd_best)
+# XG<- Data_ICP%>%
+#   pull(HDI)
+# XE <- Data_ICP%>%
+#   pull(EDI)
+#   
+# 
+# dagify(Y~~XG)%>%
+#   ggdag_canonical()
+# ### mur zur visualisierung
+# 
+# 
+# ### mit dem lavaan package eine SEM durchführen
+# 
+# model<-'
+# Y=~HDI+GDI+EDI+Im_Ex+GNI+total_index_core+SG.GEN.PARL.ZS+SP.POP.2529.MA.5Y+SP.POP.2529.FE.5Y+CC.EST+PV.EST+GE.EST+RQ.EST+RL.EST+VA.EST+SP.POP.TOTL.FE.ZS
+# 
+# '
+# fit <- sem(model,data= Data_ICP, meanstructure = TRUE)
+# summary(fit, standardized = TRUE, fit.measures = TRUE)
+# coef(fit)
+# 
+# semPaths(fit, what="paths",whatLabels = "par", style = "lisrel", layout = "tree", rotation = 2)
+### mit dem SEM Model sollte die Struktur des Graphens vorer klar sein. Ist sie aber nicht. Rechnet aber dennoch Zusammenhänge aus 
+
+
+install.packages("VIM")
+install.packages("FactoMineR")
+install.packages("missMDA")
+install.packages("naniar")
+library(missMDA)
+library(VIM)
+library(FactoMineR)
+library(naniar)
+
+gg_miss_var(Stat_Data_geo)
+res<-summary(aggr(Stat_Data_geo, sortVar=TRUE))$combinatio
+
+head(res[rev(order(res[,2])),])
+matrixplot(Stat_Data_geo, sortby = 2)
+
+marginplot(Stat_Data_geo[,c("economy","region_wb")])
+
+na_var_eco <- Stat_Data_geo%>%
+  filter(Year>2009)%>%
+  group_by(economy)%>%
+  miss_var_summary()%>%
+  pivot_wider(names_from = economy,values_from = c("n_miss","pct_miss"))
+
+na_var_reg <- Stat_Data_geo%>%
+  filter(Year>2000)%>%
+  group_by(region_wb)%>%
+  miss_var_summary()%>%
+  pivot_wider(names_from = region_wb,values_from = c("n_miss","pct_miss"))
+
+

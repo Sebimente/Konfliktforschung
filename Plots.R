@@ -161,25 +161,94 @@ Konf_type
 demokratie_Konf
 
 
+### QQ Plots
+Im_Ex_qq <-Stat_Data_geo%>%
+  ggplot(aes(sample=Im_Ex))+
+  geom_qq()+
+  geom_qq_line()
+
+HDI_qq<- Stat_Data_geo%>%
+  ggplot(aes(sample=HDI))+
+  geom_qq()+
+  geom_qq_line()
+
+EDI_qq <- Stat_Data_geo%>%
+  ggplot(aes(sample=EDI))+
+  geom_qq()+
+  geom_qq_line()
+
+GDI_qq <- Stat_Data_geo%>%
+  ggplot(aes(sample=GDI))+
+  geom_qq()+
+  geom_qq_line()
+
+demo_total_qq <- Stat_Data_geo%>%
+  ggplot(aes(sample=total_index_core))+
+  geom_qq()+
+  geom_qq_line()
+
+fiParlament_qq <- Stat_Data_geo%>%
+  ggplot(aes(sample=SG.GEN.PARL.ZS))+
+  geom_qq()+
+  geom_qq_line()
+
+pop_25_29m_qq <-  Stat_Data_geo%>%
+  ggplot(aes(sample=SP.POP.2529.MA.5Y))+
+  geom_qq()+
+  geom_qq_line()
+
+Corruption_qq <-  Stat_Data_geo%>%
+  ggplot(aes(sample=CC.EST))+
+  geom_qq()+
+  geom_qq_line()
+
+Government_qq <-  Stat_Data_geo%>%
+  ggplot(aes(sample=GE.EST))+
+  geom_qq()+
+  geom_qq_line()
+
+Regulatory_qq <-  Stat_Data_geo%>%
+  ggplot(aes(sample=RQ.EST))+
+  geom_qq()+
+  geom_qq_line()
+
+ROL_qq <-  Stat_Data_geo%>%
+  ggplot(aes(sample=RL.EST))+
+  geom_qq()+
+  geom_qq_line()
+
+voice_qq <-  Stat_Data_geo%>%
+  ggplot(aes(sample=VA.EST))+
+  geom_qq()+
+  geom_qq_line()
+
+pop_f_qq <-Stat_Data_geo%>%
+  ggplot(aes(sample=SP.POP.TOTL.FE.ZS))+
+  geom_qq()+
+  geom_qq_line()
+
 
 ###### BAlkendiagramme
 ### UN Regionen und die Verteilung von Konflikten
 Konf_regio <-Data_geo%>%
   filter(Konflikt==TRUE)%>%
-  ggplot(aes(region_un))+
-  geom_bar()+
-  labs(title = "Verteilung der Konflikte nach den Regionen")+
+  ggplot(aes(region_wb))+
+  geom_bar(fill= "grey50")+
+  labs(x= "Regionen (World Bank)", y= "Anzahl")+
+  ggtitle("Verteilung der Konflikte nach Regionen(1989-2020)")+
+  theme_minimal()+
   theme(text = element_text(size = 10),
         axis.text.x = element_text(angle = 30, hjust=1))
-### Subregionen und die Verteilung von Konflikten (differenzierter)
+
+  ### Subregionen und die Verteilung von Konflikten (differenzierter)
 Data_geo%>%
   filter(Konflikt==TRUE)%>%
   ggplot(aes(subregion))+
   geom_bar()+
-  labs(title = "Verteilung der Konflikte nach den Regionen")+
+  labs(title = "Verteilung der Konflikte Regionen(1989-2020)")+
   theme(text = element_text(size = 10),
         axis.text.x = element_text(angle = 30, hjust=1))
-Data_geo%>%
+K-Data_geo%>%
   filter(Konflikt==TRUE)%>%
   ggplot(aes(region_wb))+
   geom_bar()+
@@ -194,11 +263,19 @@ Konf_type <-Data_geo%>%
   labs(x="Anzahl an Konflikten",y = "Konflikttyp", titel="Art der Konflikte")
 ##### Interesse an typ 3
 
+### wichtig! NAs in NAs umgewandelt
+na_strings <- c("NA")
+Data_geo<-Data_geo%>% 
+  replace_with_na_at(.vars=c("classification_core"), condition = ~.x %in% na_strings)
+
+
 demokratie_Konf <-Data_geo%>%
   filter(Konflikt==TRUE)%>%
   ggplot(aes(classification_core))+
-  geom_bar()+
-  labs(x="Einteilung in politische Systeme")+
+  geom_bar(aes(fill=region_wb))+
+  scale_fill_viridis_d("Regionen (World Bank)",na.value="grey50")+
+  labs(x="Einteilung in politische Systeme",y= "Anzahl")+
+  ggtitle("Konflikte und Staatssystem (1989-2020)")+
   theme_minimal()#   nochmal prüfen
 
 "1 = extrasystemic (between a state and a non-state group outside its own territory, where the government side is fighting to retain control of a territory outside the state system)
@@ -210,6 +287,151 @@ government; side B is always one or more rebel
 groups; there is involvement of foreign
 governments with troops, i.e. there is at least ONE
 side_a_2nd or side_b_2nd coded)."
+
+###Konflikte aufs Jahr
+
+
+Konf_year <- Data_geo%>%
+  filter(Konflikt==TRUE)%>%
+  ggplot(aes(Year))+
+  geom_bar(aes(fill= region_wb))+
+  #scale_fill_brewer("Regionen (World Bank)",palette = "YlGn", na.value= "grey50")+
+  scale_fill_viridis_d("Regionen (World Bank)",na.value="grey50")+
+  theme_minimal()+
+  labs(x= "Jahre", y= "Anzahl")+
+  ggtitle("Anzahl von Konflikten (1989-2020)")
+
+Konf_year_type <- Data_geo%>%
+  filter(Konflikt==TRUE)%>%
+  ggplot(aes(Year))+
+  geom_bar(aes(fill= type_of_conflict))
+
+Konf_year_eco <- Data_geo%>%
+  filter(Konflikt==TRUE)%>%
+  ggplot(aes(economy))+
+  geom_bar(fill= "grey50")+ 
+  labs(x= "Ökonomische Regionen (World Bank)", y= "Anzahl")+
+  ggtitle("Verteilung der Konflikte nach ökonomischen Regionen(1989-2020)")+
+  theme_minimal()+
+  theme(text = element_text(size = 10),
+        axis.text.x = element_text(angle = 30, hjust=1))
+
+# Todeszahl pro jahr
+
+Konf_year_bd <- Stat_Data_geo%>%
+  ggplot(aes(Year, Sum_bd_best))+
+  geom_col()
+  #scale_y_continuous(trans='log10',
+                     #breaks=trans_breaks('log10', function(x) 10^x),
+                     #labels=trans_format('log10', math_format(10^.x)))
+
+
+Konf_Year_bd <- Stat_Data_geo%>%
+  filter(Konflikt== TRUE)%>%
+  ggplot(aes(Year,Sum_bd_best))+
+  geom_path()+
+  scale_y_continuous(trans='log10',
+                     breaks=trans_breaks('log10', function(x) 10^x),
+                     labels=trans_format('log10', math_format(10^.x)))
+
+
+## Steigerung der Variablen in Regionen
+Stat_Data_geo%>%
+  ggplot(aes(Year, TX.VAL.FUEL.ZS.UN, color = region_wb))+
+  geom_path()
+  
+
+Stat_Data_geo%>%
+  ggplot(aes(Year, SP.DYN.LE00.IN))+
+  geom_path(aes(color = region_wb))+
+  geom_line(stat = "hline", in)
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, Population_secondary_education_25., color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, GNI, color = region_wb)) ### neuer Datensatz geht nicht nur von 2010
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, Im_Ex, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SG.GEN.PARL.ZS, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SP.POP.GROW, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, EN.POP.DNST, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SH.STA.MMRT, color = region_wb))## auch log
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SP.ADO.TFRT, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SP.POP.2024.MA.5Y, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SP.POP.2024.MA.5Y, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SL.TLF.TOTL.FE.ZS, color = region_wb))
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SL.UEM.1524.ZS, color = region_wb))
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, TX.VAL.MMTL.ZS.UN, color = region_wb))
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SE.XPD.TOTL.GD.ZS, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, NY.GDP.PCAP.CN, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, exp_years_school, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, mean_years_schooling, color = region_wb))
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, equality_dim_index_core, color = region_wb))
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, SL.UEM.1524.ZS, color = region_wb))
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, control_dim_index_core, color = region_wb))
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, freedom_dim_index_core, color = region_wb))
+
+
+
+Stat_Data_geo%>%
+  ggplot()+
+  geom_path(aes(Year, VA.EST))+
+  geom_path(aes(Year, VA.EST))
+
+
 
 
 ###GDP per capita
@@ -1531,9 +1753,6 @@ GPI_school_ter_p<-Stat_Data_geo%>%
 # 
 # ## erster Plot mit den hdi daten
 # 
-# 
-# 
-# 
 # ##Darstellung mit dem GII
 # Data_geo%>%
 #   #drop_na()%>%
@@ -1610,3 +1829,4 @@ GPI_school_ter_p<-Stat_Data_geo%>%
 
 ###### nur plotten mit den geschätzen Todeszahlen. Ich benutze die statistischen Werte um mehrfache Konflikte in einemJahr zu verändern
 
+# QQPlots um linearität zu überfrüfen. qqnorm(LRS$PHOG_T_VuS_1, pch = 20) qqline(LRS$PHOG_T_VuS_1) -> geht hoffentlich auch bei ggplot

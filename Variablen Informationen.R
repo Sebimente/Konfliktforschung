@@ -10,15 +10,15 @@
 #   
 # GNI = Werte von 0-1, 0 = geringeres GNI, 1 = hohes GNI ,GNI per capita (2017 PPP International $, using natural logarithm) expressed as an index using a minimum value of $100 and a maximum value $75,000.
 #   
-# Investment = Werte von 0- 30, 0 = niedrige Summe, 30 = hohe Summe, Sum of equity capital, reinvestment of earnings, other longterm capital and short-term capital, expressed as a percentage of GDP
+#- Investment = Werte von 0- 30, 0 = niedrige Summe, 30 = hohe Summe, Sum of equity capital, reinvestment of earnings, other longterm capital and short-term capital, expressed as a percentage of GDP
 #   
-# Ineq_Coef = Werte von 0 -50, 0 = geringe Inequality, je größer desto stärkere Inequality, Average inequality in three basic dimensions of human development.Calculated as the arithmetic mean of the values in inequality in life expectancy, inequality in education and inequality in income
+#- Ineq_Coef = Werte von 0 -50, 0 = geringe Inequality, je größer desto stärkere Inequality, Average inequality in three basic dimensions of human development.Calculated as the arithmetic mean of the values in inequality in life expectancy, inequality in education and inequality in income
 # 
-# adjHDI = Werte von 0-1, 0= niedriger adjHDI, 1 = hoher adjHDI  HDI value adjusted for inequalities in the three basic dimensions of human development, Calculated as the geometric mean of the values in the inequality-adjusted life expectancy index, inequality-adjusted education index and inequality-adjusted income index
+#- adjHDI = Werte von 0-1, 0= niedriger adjHDI, 1 = hoher adjHDI  HDI value adjusted for inequalities in the three basic dimensions of human development, Calculated as the geometric mean of the values in the inequality-adjusted life expectancy index, inequality-adjusted education index and inequality-adjusted income index
 #   
 # GDI = Werte von 0-2, 0 = hohe Unterschiede im Verhältnis, 1 = niedrige Unteschiede  Ratio of female to male HDI values, (HDIf/HDIm)= Wenn über 1, dann Hat das Land einen stärkeren HDIf
 #
-# Ex_In = Werte von 0-500, 0 = eher unabhänging, 500 = abhängig  Sum of exports and imports of goods and services, expressed as a percentage of gross domestic product (GDP). It is a basic indicator of openness to foreign trade and economic integration and indicates the dependence of domestic producers on foreign demand (exports) and of domestic consumers and producers on foreign supply (imports), relative to the country's economic size (GDP)
+# Ex_Im = Werte von 0-500, 0 = eher unabhänging, 500 = abhängig  Sum of exports and imports of goods and services, expressed as a percentage of gross domestic product (GDP). It is a basic indicator of openness to foreign trade and economic integration and indicates the dependence of domestic producers on foreign demand (exports) and of domestic consumers and producers on foreign supply (imports), relative to the country's economic size (GDP)
 #
 # 
 
@@ -42,7 +42,7 @@
 #  
 # SL.TLF.CACT.FE.ZS= Werte von 0-100, weil Prozent, Labor force participation rate, female (% of female population ages 15+) (modeled ILO estimate)
 # 
-# SL.TLF.TOTL.FE.ZS= Werte von 0-100, weil Prozent, Labor force, female (% of total labor force)
+# = Werte von 0-100, weil Prozent, Labor force, female (% of total labor force)
 # 
 # SL.TLF.CACT.FM.ZS= Werte von 0-100, weil Prozent, Ratio of female to male labor force participation rate (%) (modeled ILO estimate)
 # 
@@ -64,7 +64,7 @@
 # 
 # SE.ENR.PRSC.FM.ZS= School enrollment, primary and secondary (gross), gender parity index (GPI)
 # 
-# SE.ENR.SECO.FM.ZS= School enrollment, tertiary (gross), gender parity index (GPI)
+#-SE.ENR.SECO.FM.ZS= School enrollment, tertiary (gross), gender parity index (GPI)
 # 
 # Quelle: Governance Indicators von der World Bank
 #
