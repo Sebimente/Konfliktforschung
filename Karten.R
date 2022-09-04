@@ -27,6 +27,15 @@ HDI_map <- data_map %>%
   theme_minimal()
 HDI_map
 
+
+countries_sf <- ne_countries(returnclass = "sf")
+countries_sf %>%
+  ggplot() +
+  geom_sf()
+
+
+data_map <- inner_join(countries_sf,Data_geo, by = c("iso_a3"="Country Code"))
+head(data_map)
 GII_map <- data_map %>%
   filter(Year == 2019)%>%
   ggplot(aes(fill= GII))+
